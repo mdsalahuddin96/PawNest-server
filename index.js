@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 dotenv.config();
 const app = express();
 app.use(cors());
@@ -19,16 +19,21 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
-    const db=client.db('pawnestDB');
-    const petsCollection=db.collection('pets');
-    app.get("/featuredPets",async(req,res)=>{
-        const result=await petsCollection.find().limit(5).toArray()
-        res.json(result)
-    })
-    app.get("/allpets",async(req,res)=>{
-      const result=await petsCollection.find().toArray()
-      res.json(result)
-    })
+    const db = client.db("pawnestDB");
+    const petsCollection = db.collection("pets");
+    app.get("/featuredPets", async (req, res) => {
+      const result = await petsCollection.find().limit(5).toArray();
+      res.json(result);
+    });
+    app.get("/allpets", async (req, res) => {
+      const result = await petsCollection.find().toArray();
+      res.json(result);
+    });
+    app.get("/petDetails/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await petsCollection.findOne({ _id: new ObjectId(id) });
+      res.json(result);
+    });
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
@@ -37,7 +42,7 @@ async function run() {
     // await client.close();
   }
 }
-run().catch(console.dir)
+run().catch(console.dir);
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
