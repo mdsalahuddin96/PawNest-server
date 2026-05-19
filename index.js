@@ -34,6 +34,13 @@ async function run() {
       const result = await petsCollection.findOne({ _id: new ObjectId(id) });
       res.json(result);
     });
+    app.get("/pet", async (req, res) => {
+      const search = req.query.search;
+      const result=await petsCollection.find({
+        name:{$regex:search, $options:"i"}
+      }).toArray()
+      res.send(result);
+    });
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
