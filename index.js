@@ -25,28 +25,63 @@ async function run() {
       const result = await petsCollection.find().limit(5).toArray();
       res.json(result);
     });
-    app.get("/allpets", async (req, res) => {
-      const result = await petsCollection.find().toArray();
-      res.json(result);
+    app.get("/all-pets", async (req, res) => {
+      const search = req.query.search;
+      const species = req.query.species;
+      const fee = req.query.fee;
+      let query = {};
+      if (search) {
+        query.name = {
+          $regex: search,
+          $options: "i",
+        };
+      }
+      if (species) {
+        query.species = {
+          $regex: species,
+          $options: "i",
+        };
+      }
+      if (fee === "under-50") {
+        query.adoptionFee = { $lt: 50 };
+      }
+
+      if (fee === "50-100") {
+        query.adoptionFee = {
+          $gte: 50,
+          $lte: 100,
+        };
+      }
+
+      if (fee === "above-100") {
+        query.adoptionFee = { $gt: 100 };
+      }
+      const result = await petsCollection.find(query).toArray();
+      res.send(result);
+      // if (search) {
+      //   const result = await petsCollection
+      //     .find({ name: { $regex: search, $options: "i" } })
+      //     .toArray();
+      //   res.send(result);
+      // } else if (species) {
+      //   const result = await petsCollection
+      //     .find({ species: { $regex: species, $options: "i" } })
+      //     .toArray();
+      //   res.send(result);
+      // } else {
+      //   const result = await petsCollection.find().toArray();
+      //   res.json(result);
+      // }
     });
     app.get("/petDetails/:id", async (req, res) => {
       const { id } = req.params;
       const result = await petsCollection.findOne({ _id: new ObjectId(id) });
       res.json(result);
     });
-    app.get("/pet", async (req, res) => {
-      const search = req.query.search;
-      const species = req.query.species;
-      console.log(species);
-      const result = await petsCollection
-        .find({
-          $or:[
-            {name:{$regex:search, $options:"i"}},{species:{$regex:species,$options:"i"}}
-          ]
-        })
-        .toArray();
-      res.send(result);
-    });
+    // app.get("/all-pets", async (req, res) => {
+    //   const search = req.query.search;
+    //   // const species = req.query.species;
+    // });
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
