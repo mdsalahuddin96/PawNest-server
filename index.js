@@ -36,9 +36,15 @@ async function run() {
     });
     app.get("/pet", async (req, res) => {
       const search = req.query.search;
-      const result=await petsCollection.find({
-        name:{$regex:search, $options:"i"}
-      }).toArray()
+      const species = req.query.species;
+      console.log(species);
+      const result = await petsCollection
+        .find({
+          $or:[
+            {name:{$regex:search, $options:"i"}},{species:{$regex:species,$options:"i"}}
+          ]
+        })
+        .toArray();
       res.send(result);
     });
     await client.db("admin").command({ ping: 1 });
