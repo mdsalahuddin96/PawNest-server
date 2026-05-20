@@ -21,6 +21,7 @@ async function run() {
     await client.connect();
     const db = client.db("pawnestDB");
     const petsCollection = db.collection("pets");
+    const requestCollection=db.collection("requests");
     app.get("/featuredPets", async (req, res) => {
       const result = await petsCollection.find().limit(5).toArray();
       res.json(result);
@@ -68,6 +69,11 @@ async function run() {
       const {id}=req.params;
       const result=await petsCollection.find({owner_id:id}).toArray();
       res.send(result);
+    })
+    app.post("/adoptRequest",async(req,res)=>{
+      const data=req.body;
+      const result=await requestCollection.insertOne(data);
+      res.json(result)
     })
     app.post('/add-pet',async(req,res)=>{
       const data=req.body;
