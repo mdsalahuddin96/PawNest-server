@@ -64,6 +64,11 @@ async function run() {
       const result = await petsCollection.findOne({ _id: new ObjectId(id) });
       res.json(result);
     });
+    app.get("/petsBy-userId/:id",async(req,res)=>{
+      const {id}=req.params;
+      const result=await petsCollection.find({owner_id:id}).toArray();
+      res.send(result);
+    })
     app.post('/add-pet',async(req,res)=>{
       const data=req.body;
       const result=await petsCollection.insertOne(data)
