@@ -23,7 +23,7 @@ async function run() {
     const petsCollection = db.collection("pets");
     const requestCollection=db.collection("requests");
     app.get("/featuredPets", async (req, res) => {
-      const result = await petsCollection.find().limit(5).toArray();
+      const result = await petsCollection.find().limit(6).toArray();
       res.json(result);
     });
     app.get("/all-pets", async (req, res) => {
@@ -73,6 +73,13 @@ async function run() {
     app.post("/adoptRequest",async(req,res)=>{
       const data=req.body;
       const result=await requestCollection.insertOne(data);
+      res.json(result)
+    })
+    app.get("/request/:email", async(req,res)=>{
+      const {email}=req.params
+      const result=await requestCollection.find({
+        requester_email:email
+      }).toArray()
       res.json(result)
     })
     app.post('/add-pet',async(req,res)=>{
