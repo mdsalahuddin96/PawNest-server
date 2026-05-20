@@ -58,30 +58,17 @@ async function run() {
       }
       const result = await petsCollection.find(query).toArray();
       res.send(result);
-      // if (search) {
-      //   const result = await petsCollection
-      //     .find({ name: { $regex: search, $options: "i" } })
-      //     .toArray();
-      //   res.send(result);
-      // } else if (species) {
-      //   const result = await petsCollection
-      //     .find({ species: { $regex: species, $options: "i" } })
-      //     .toArray();
-      //   res.send(result);
-      // } else {
-      //   const result = await petsCollection.find().toArray();
-      //   res.json(result);
-      // }
     });
     app.get("/petDetails/:id", async (req, res) => {
       const { id } = req.params;
       const result = await petsCollection.findOne({ _id: new ObjectId(id) });
       res.json(result);
     });
-    // app.get("/all-pets", async (req, res) => {
-    //   const search = req.query.search;
-    //   // const species = req.query.species;
-    // });
+    app.post('/add-pet',async(req,res)=>{
+      const data=req.body;
+      const result=await petsCollection.insertOne(data)
+      res.json(result)
+    })
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
