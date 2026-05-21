@@ -21,7 +21,7 @@ async function run() {
     await client.connect();
     const db = client.db("pawnestDB");
     const petsCollection = db.collection("pets");
-    const requestCollection=db.collection("requests");
+    const requestCollection = db.collection("requests");
     app.get("/featuredPets", async (req, res) => {
       const result = await petsCollection.find().limit(6).toArray();
       res.json(result);
@@ -65,45 +65,86 @@ async function run() {
       const result = await petsCollection.findOne({ _id: new ObjectId(id) });
       res.json(result);
     });
-    app.get("/petsBy-userId/:id",async(req,res)=>{
-      const {id}=req.params;
-      const result=await petsCollection.find({owner_id:id}).toArray();
+    app.get("/petsBy-userId/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await petsCollection.find({ owner_id: id }).toArray();
       res.send(result);
-    })
-    app.post("/adoptRequest",async(req,res)=>{
-      const data=req.body;
-      const result=await requestCollection.insertOne(data);
-      res.json(result)
-    })
-    app.get("/request",async(req,res)=>{
+    });
+    app.post("/adoptRequest", async (req, res) => {
+      const data = req.body;
+      const result = await requestCollection.insertOne(data);
+      res.json(result);
+    });
+    app.get("/request", async (req, res) => {
       const result = await requestCollection.find().toArray();
       res.json(result);
+    });
+    app.get("/request/:email", async (req, res) => {
+      const { email } = req.params;
+      const result = await requestCollection
+        .find({
+          requester_email: email,
+        })
+        .toArray();
+      res.json(result);
+    });
+    app.patch("/request/status/:id", async (req, res) => {
+      const { id } = req.params;
+      const body = req.body;
+      const result = await requestCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            requested_status: body.requested_status,
+          },
+        },
+      );
+      res.send(result);
+    });
+    app.patch("/upDatePet/status/:id", async (req, res) => {
+      const { id } = req.params;
+      const body = req.body;
+      const result = await petsCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            status: body.status,
+          },
+        },
+      );
+      res.send(result);
+    });
+    app.post("/add-pet", async (req, res) => {
+      const data = req.body;
+      const result = await petsCollection.insertOne(data);
+      res.json(result);
+    });
+    app.patch("/update-pet/:id",async(req,res)=>{
+      const { id } = req.params;
+      const data = req.body;
+      console.log(data)
+      const result = await petsCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: data
+        },
+      );
+      res.send(result);
     })
-    app.get("/request/:email", async(req,res)=>{
-      const {email}=req.params
-      const result=await requestCollection.find({
-        requester_email:email
-      }).toArray()
-      res.json(result)
-    })
-    app.patch("/request/status/:id", async(req,res)=>{
-      const {id} = req.params;
-      const body=req.body;
-      const result=await requestCollection.updateOne(
-        {_id:new ObjectId(id)},
-       {
-        $set:{
-          requested_status:body.requested_status
-        }
-       }
-      )
-      res.send(result)
-    })
-    app.post('/add-pet',async(req,res)=>{
-      const data=req.body;
-      const result=await petsCollection.insertOne(data)
-      res.json(result)
-    })
+    app.delete("/deletePet/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await petsCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.json(result);
+    });
+    app.delete("/deleteReq/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await requestCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.json(result);
+    });
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
