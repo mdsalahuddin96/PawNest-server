@@ -86,12 +86,18 @@ async function run() {
       }).toArray()
       res.json(result)
     })
-    app.get("/request/pet/:id", async(req,res)=>{
-      const {id}=req.params
-      const result=await requestCollection.findOne({
-        pet_id:id
-      }).toArray()
-      res.json(result)
+    app.patch("/request/status/:id", async(req,res)=>{
+      const {id} = req.params;
+      const body=req.body;
+      const result=await requestCollection.updateOne(
+        {_id:new ObjectId(id)},
+       {
+        $set:{
+          requested_status:body.requested_status
+        }
+       }
+      )
+      res.send(result)
     })
     app.post('/add-pet',async(req,res)=>{
       const data=req.body;
