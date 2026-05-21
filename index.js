@@ -72,8 +72,24 @@ async function run() {
     });
     app.post("/adoptRequest", async (req, res) => {
       const data = req.body;
+
+      // duplicate request check
+      const alreadyRequested = await requestCollection.findOne({
+        pet_id: data.pet_id,
+        requester_email: data.requester_email,
+      });
+
+      if (alreadyRequested) {
+        return res.send({
+          success: false,
+          message: "You already requested for this pet",
+        });
+      }
       const result = await requestCollection.insertOne(data);
-      res.json(result);
+      res.send({
+        success: true,
+        insertedId: result.insertedId,
+      });
     });
     app.get("/request", async (req, res) => {
       const result = await requestCollection.find().toArray();
@@ -119,18 +135,18 @@ async function run() {
       const result = await petsCollection.insertOne(data);
       res.json(result);
     });
-    app.patch("/update-pet/:id",async(req,res)=>{
+    app.patch("/update-pet/:id", async (req, res) => {
       const { id } = req.params;
       const data = req.body;
-      console.log(data)
+      console.log(data);
       const result = await petsCollection.updateOne(
         { _id: new ObjectId(id) },
         {
-          $set: data
+          $set: data,
         },
       );
       res.send(result);
-    })
+    });
     app.delete("/deletePet/:id", async (req, res) => {
       const { id } = req.params;
       const result = await petsCollection.deleteOne({
