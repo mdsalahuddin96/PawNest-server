@@ -75,10 +75,21 @@ async function run() {
       const result=await requestCollection.insertOne(data);
       res.json(result)
     })
+    app.get("/request",async(req,res)=>{
+      const result = await requestCollection.find().toArray();
+      res.json(result);
+    })
     app.get("/request/:email", async(req,res)=>{
       const {email}=req.params
       const result=await requestCollection.find({
         requester_email:email
+      }).toArray()
+      res.json(result)
+    })
+    app.get("/request/pet/:id", async(req,res)=>{
+      const {id}=req.params
+      const result=await requestCollection.findOne({
+        pet_id:id
       }).toArray()
       res.json(result)
     })
