@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 dotenv.config();
 const app = express();
 app.use(cors());
@@ -15,10 +16,34 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
+)
+const verifyToken=async (req,res,next)=>{
+  const authHeader=req?.headers.authorization
+  const token=authHeader.split(" ")[1]
+  if(!authHeader){
+    return res.status(401).json({message:"Unauthorized"})
+  }
+  if(!token){
+     return res.status(401).json({message:"Unauthorized"})
+  }
+  try{
+const {payload}=await jwtVerify(token,JWKS)
+  // console.log(payload)
+  next()
+  }
+  catch(error){
+    return res.status(403).json({
+      message:"Forbidden"
+    })
+  }
+  
+}
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     const db = client.db("pawnestDB");
     const petsCollection = db.collection("pets");
     const requestCollection = db.collection("requests");
@@ -60,17 +85,18 @@ async function run() {
       const result = await petsCollection.find(query).toArray();
       res.send(result);
     });
-    app.get("/petDetails/:id", async (req, res) => {
+    app.get("/petDetails/:id",verifyToken, async (req, res) => {
       const { id } = req.params;
+
       const result = await petsCollection.findOne({ _id: new ObjectId(id) });
       res.json(result);
     });
-    app.get("/petsBy-userId/:id", async (req, res) => {
+    app.get("/petsBy-userId/:id",verifyToken, async (req, res) => {
       const { id } = req.params;
       const result = await petsCollection.find({ owner_id: id }).toArray();
       res.send(result);
     });
-    app.post("/adoptRequest", async (req, res) => {
+    app.post("/adoptRequest",verifyToken, async (req, res) => {
       const data = req.body;
 
       // duplicate request check
@@ -91,11 +117,11 @@ async function run() {
         insertedId: result.insertedId,
       });
     });
-    app.get("/request", async (req, res) => {
+    app.get("/request",verifyToken, async (req, res) => {
       const result = await requestCollection.find().toArray();
       res.json(result);
     });
-    app.get("/request/:email", async (req, res) => {
+    app.get("/request/:email",verifyToken, async (req, res) => {
       const { email } = req.params;
       const result = await requestCollection
         .find({
@@ -104,7 +130,8 @@ async function run() {
         .toArray();
       res.json(result);
     });
-    app.patch("/request/status/:id", async (req, res) => {
+
+    app.patch("/request/status/:id",verifyToken, async (req, res) => {
       const { id } = req.params;
       const body = req.body;
       const result = await requestCollection.updateOne(
@@ -117,7 +144,7 @@ async function run() {
       );
       res.send(result);
     });
-    app.patch("/upDatePet/status/:id", async (req, res) => {
+    app.patch("/upDatePet/status/:id",verifyToken, async (req, res) => {
       const { id } = req.params;
       const body = req.body;
       const result = await petsCollection.updateOne(
@@ -130,12 +157,12 @@ async function run() {
       );
       res.send(result);
     });
-    app.post("/add-pet", async (req, res) => {
+    app.post("/add-pet",verifyToken, async (req, res) => {
       const data = req.body;
       const result = await petsCollection.insertOne(data);
       res.json(result);
     });
-    app.patch("/update-pet/:id", async (req, res) => {
+    app.patch("/update-pet/:id",verifyToken, async (req, res) => {
       const { id } = req.params;
       const data = req.body;
       console.log(data);
@@ -147,21 +174,21 @@ async function run() {
       );
       res.send(result);
     });
-    app.delete("/deletePet/:id", async (req, res) => {
+    app.delete("/deletePet/:id",verifyToken, async (req, res) => {
       const { id } = req.params;
       const result = await petsCollection.deleteOne({
         _id: new ObjectId(id),
       });
       res.json(result);
     });
-    app.delete("/deleteReq/:id", async (req, res) => {
+    app.delete("/deleteReq/:id",verifyToken, async (req, res) => {
       const { id } = req.params;
       const result = await requestCollection.deleteOne({
         _id: new ObjectId(id),
       });
       res.json(result);
     });
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
